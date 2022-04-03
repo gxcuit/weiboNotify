@@ -1,3 +1,6 @@
 log/
 weibo/
 __pycache__/
+config.json
+.idea/
+test/

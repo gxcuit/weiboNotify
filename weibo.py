@@ -13,11 +13,14 @@ import random
 import sqlite3
 import sys
 import warnings
+from typing import List
+
 import const
 from collections import OrderedDict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from time import sleep
+
 
 import requests
 from lxml import etree
@@ -27,6 +30,7 @@ from tqdm import tqdm
 from util import csvutil
 from util.dateutil import convert_to_days_ago
 from util.notify import push_deer
+from util import notify
 
 warnings.filterwarnings("ignore")
 
@@ -43,6 +47,10 @@ class Weibo(object):
     def __init__(self, config):
         """Weibo类初始化"""
         self.validate_config(config)
+        # 用作获取用户以及对应的keyword
+        self.user_keywords = config['user_keywords']
+        # push
+        self.push = config["push"]
         self.filter = config[
             'filter']  # 取值范围为0、1,程序默认值为0,代表要爬取用户的全部微博,1代表只爬取用户的原创微博
         self.remove_html_tag = config[
@@ -279,7 +287,7 @@ class Weibo(object):
         """获取用户信息"""
         params = {'containerid': '100505' + str(self.user_config['user_id'])}
         # TODO 这里在读取下一个用户的时候很容易被ban，需要优化休眠时长
-        sleep(random.randint(10, 20))
+        sleep(random.randint(5, 10))
         js, status_code = self.get_json(params)
         if status_code != 200:
             logger.info(u"被ban了，需要等待一段时间")
@@ -635,7 +643,8 @@ class Weibo(object):
         else:
             created_at = created_at.replace('+0800 ', '')
             temp = datetime.strptime(created_at, '%c')
-            created_at = datetime.strftime(temp, '%Y-%m-%d')
+            created_at = datetime.strftime(temp, '%Y-%m-%d %H:%M:%S')
+            # created_at = temp
         return created_at
 
     def standardize_info(self, weibo):
@@ -913,6 +922,13 @@ class Weibo(object):
         else:
             return False
 
+    def filter_weibos(self, weibos:List, keywords: List):
+        filtered=[]
+        for weibo in weibos:
+            if any([k in weibo['text'] for k in keywords]):
+                filtered.append(weibo)
+
+        return filtered
     def get_one_page(self, page):
         """获取一页的全部微博"""
         try:
@@ -933,8 +949,9 @@ class Weibo(object):
                                     return True
                             if wb['id'] in self.weibo_id_list:
                                 continue
+                            # created_at = wb['created_at']
                             created_at = datetime.strptime(
-                                wb['created_at'], '%Y-%m-%d')
+                                wb['created_at'], '%Y-%m-%d %H:%M:%S')
                             since_date = datetime.strptime(
                                 self.user_config['since_date'], '%Y-%m-%d')
                             if const.MODE == 'append':
@@ -1600,6 +1617,10 @@ class Weibo(object):
                 pages = range(self.start_page, page_count + 1)
                 for page in tqdm(pages, desc='Progress'):
                     is_end = self.get_one_page(page)
+                    weibos_has_keywords = self.filter_weibos(self.weibo, self.user_config["keywords"])
+                    if len(weibos_has_keywords)!=0:
+                        notify.push_pushPlus(weibos_has_keywords,self.push['token'])
+                        logger.info('----find{}'.format(weibos_has_keywords))
                     if is_end:
                         break
 
@@ -1663,6 +1684,13 @@ class Weibo(object):
         """运行爬虫"""
         try:
             for user_config in self.user_config_list:
+                # 将user_config 加上keywords信息
+                user_config['keywords'] = ['']
+                if user_config['user_id'] not in self.user_keywords:
+                    logger.warning("用户{}未找到keywords，默认爬取push所有微博".format(user_config['user_id']))
+                else:
+                    user_config['keywords'] = self.user_keywords[user_config['user_id'] ]
+
                 if len(user_config['query_list']):
                     for query in user_config['query_list']:
                         self.query = query
