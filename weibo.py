@@ -924,10 +924,13 @@ class Weibo(object):
     def filter_weibos(self, weibos: List, keywords: List):
         filtered = []
         for weibo in weibos:
-            if any([k in weibo['text'] or k in weibo['retweet']['text'] if 'retweet' in weibo else False for k in keywords]):
-
+            # if any([k in weibo['text'] or k in weibo['retweet']['text'] if 'retweet' in weibo else False for k in keywords]):
+            if any([k in weibo['text'] for k in keywords]):
                 filtered.append(weibo)
-                continue
+                break
+            if 'retweet' in weibo and any([k in weibo['retweet']['text'] for k in keywords]):
+                filtered.append(weibo)
+                break
             # if weibo['retweet'] and any([k in weibo['retweet'][]  for k in keywords]):
 
         return filtered
