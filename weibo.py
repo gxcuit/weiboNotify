@@ -21,7 +21,6 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from time import sleep
 
-
 import requests
 from lxml import etree
 from requests.adapters import HTTPAdapter
@@ -29,7 +28,7 @@ from tqdm import tqdm
 
 from util import csvutil
 from util.dateutil import convert_to_days_ago
-from util.notify import push_deer
+# from util.notify import push_deer
 from util import notify
 
 warnings.filterwarnings("ignore")
@@ -72,9 +71,9 @@ class Weibo(object):
             'original_video_download']  # 取值范围为0、1, 0代表不下载原创微博视频,1代表下载
         self.retweet_video_download = config[
             'retweet_video_download']  # 取值范围为0、1, 0代表不下载转发微博视频,1代表下载
-        self.download_comment = config['download_comment']  #1代表下载评论,0代表不下载
+        self.download_comment = config['download_comment']  # 1代表下载评论,0代表不下载
         self.comment_max_download_count = config[
-            'comment_max_download_count']  #如果设置了下评论，每条微博评论数会限制在这个值内
+            'comment_max_download_count']  # 如果设置了下评论，每条微博评论数会限制在这个值内
         self.result_dir_name = config.get(
             'result_dir_name', 0)  # 结果目录名，取值为0或1，决定结果文件存储在用户昵称文件夹里还是用户id文件夹里
         cookie = config.get('cookie')  # 微博cookie，可填可不填
@@ -147,7 +146,7 @@ class Weibo(object):
                     mode)
                 sys.exit()
         # 验证运行模式
-        if('sqlite' not in config['write_mode'] and const.MODE == 'append'):
+        if ('sqlite' not in config['write_mode'] and const.MODE == 'append'):
             logger.warning(u'append模式下请将sqlite加入write_mode中')
             sys.exit()
 
@@ -224,6 +223,7 @@ class Weibo(object):
         last_weibo_msg = csvutil.insert_or_update_user(logger, result_headers, result_data, file_path)
         self.last_weibo_id = last_weibo_msg.split(' ')[0] if last_weibo_msg else ''
         self.last_weibo_date = last_weibo_msg.split(' ')[1] if last_weibo_msg else self.user_config['since_date']
+
     def user_to_mongodb(self):
         """将爬取的用户信息写入MongoDB数据库"""
         user_list = [self.user]
@@ -300,7 +300,7 @@ class Weibo(object):
             user_info['gender'] = info.get('gender', '')
             params = {
                 'containerid':
-                '230283' + str(self.user_config['user_id']) + '_-_INFO'
+                    '230283' + str(self.user_config['user_id']) + '_-_INFO'
             }
             zh_list = [
                 u'生日', u'所在地', u'小学', u'初中', u'高中', u'大学', u'公司', u'注册时间',
@@ -321,7 +321,7 @@ class Weibo(object):
                         if card.get('item_name') in zh_list:
                             user_info[en_list[zh_list.index(
                                 card.get('item_name'))]] = card.get(
-                                    'item_content', '')
+                                'item_content', '')
             user_info['statuses_count'] = self.string_to_int(
                 info.get('statuses_count', 0))
             user_info['followers_count'] = self.string_to_int(
@@ -344,7 +344,6 @@ class Weibo(object):
         else:
             logger.info(u"user_id_list中 {} id出错".format(self.user_config['user_id']))
             return -1
-
 
     def get_long_weibo(self, id):
         """获取长微博"""
@@ -437,12 +436,12 @@ class Weibo(object):
                                        verify=False)
                     try_count += 1
                     if (url.endswith(('jpg', 'jpeg'))
-                            and not downloaded.content.endswith(b'\xff\xd9')
-                        ) or (url.endswith('png') and
-                              not downloaded.content.endswith(b'\xaeB`\x82')):
+                        and not downloaded.content.endswith(b'\xff\xd9')
+                    ) or (url.endswith('png') and
+                          not downloaded.content.endswith(b'\xaeB`\x82')):
                         flag = True
 
-                #需要分别判断是否需要下载
+                # 需要分别判断是否需要下载
                 if not file_exist:
                     with open(file_path, 'wb') as f:
                         f.write(downloaded.content)
@@ -465,7 +464,7 @@ class Weibo(object):
         cur = con.cursor()
 
         query_sql = """SELECT url FROM bins WHERE path=? """
-        count = cur.execute(query_sql, (url, )).fetchone()
+        count = cur.execute(query_sql, (url,)).fetchone()
         con.close()
         if count is None:
             return False
@@ -652,7 +651,7 @@ class Weibo(object):
         for k, v in weibo.items():
             if 'bool' not in str(type(v)) and 'int' not in str(
                     type(v)) and 'list' not in str(
-                        type(v)) and 'long' not in str(type(v)):
+                type(v)) and 'long' not in str(type(v)):
                 weibo[k] = v.replace(u'\u200b', '').encode(
                     sys.stdout.encoding, 'ignore').decode(sys.stdout.encoding)
         return weibo
@@ -821,19 +820,19 @@ class Weibo(object):
         try:
             json = req.json()
         except Exception as e:
-            #没有cookie会抓取失败
-            #微博日期小于某个日期的用这个url会被403 需要用老办法尝试一下
+            # 没有cookie会抓取失败
+            # 微博日期小于某个日期的用这个url会被403 需要用老办法尝试一下
             error = True
 
         if error:
-            #最大好像只能有50条 TODO: improvement
+            # 最大好像只能有50条 TODO: improvement
             self._get_weibo_comments_nocookie(weibo, 0, max_count, 0,
                                               on_downloaded)
             return
 
         data = json.get('data')
         if not data:
-            #新接口没有抓取到的老接口也试一下
+            # 新接口没有抓取到的老接口也试一下
             self._get_weibo_comments_nocookie(weibo, 0, max_count, 0,
                                               on_downloaded)
             return
@@ -841,13 +840,13 @@ class Weibo(object):
         comments = data.get('data')
         count = len(comments)
         if count == 0:
-            #没有了可以直接跳出递归
+            # 没有了可以直接跳出递归
             return
 
         if on_downloaded:
             on_downloaded(weibo, comments)
 
-        #随机睡眠一下
+        # 随机睡眠一下
         if max_count % 40 == 0:
             sleep(random.randint(1, 5))
 
@@ -879,7 +878,7 @@ class Weibo(object):
         try:
             json = req.json()
         except Exception as e:
-            #没有cookie会抓取失败
+            # 没有cookie会抓取失败
             logger.info(u'未能抓取评论 微博id:{id} 内容{text}'.format(
                 id=id, text=weibo['text']))
             return
@@ -890,7 +889,7 @@ class Weibo(object):
         comments = data.get('data')
         count = len(comments)
         if count == 0:
-            #没有了可以直接跳出递归
+            # 没有了可以直接跳出递归
             return
 
         if on_downloaded:
@@ -899,7 +898,7 @@ class Weibo(object):
         cur_count += count
         page += 1
 
-        #随机睡眠一下
+        # 随机睡眠一下
         if page % 2 == 0:
             sleep(random.randint(1, 5))
 
@@ -922,13 +921,17 @@ class Weibo(object):
         else:
             return False
 
-    def filter_weibos(self, weibos:List, keywords: List):
-        filtered=[]
+    def filter_weibos(self, weibos: List, keywords: List):
+        filtered = []
         for weibo in weibos:
-            if any([k in weibo['text'] for k in keywords]):
+            if any([k in weibo['text'] or k in weibo['retweet']['text'] if 'retweet' in weibo else False for k in keywords]):
+
                 filtered.append(weibo)
+                continue
+            # if weibo['retweet'] and any([k in weibo['retweet'][]  for k in keywords]):
 
         return filtered
+
     def get_one_page(self, page):
         """获取一页的全部微博"""
         try:
@@ -942,7 +945,8 @@ class Weibo(object):
                     if w['card_type'] == 9:
                         wb = self.get_one_weibo(w)
                         if wb:
-                            if const.CHECK_COOKIE['CHECK'] and (not const.CHECK_COOKIE['CHECKED']) and wb['text'] == const.CHECK_COOKIE['HIDDEN_WEIBO'] + ' ':
+                            if const.CHECK_COOKIE['CHECK'] and (not const.CHECK_COOKIE['CHECKED']) and wb['text'] == \
+                                    const.CHECK_COOKIE['HIDDEN_WEIBO'] + ' ':
                                 const.CHECK_COOKIE['CHECKED'] = True
                                 logger.info('cookie检查通过')
                                 if const.CHECK_COOKIE['EXIT_AFTER_CHECK']:
@@ -961,7 +965,8 @@ class Weibo(object):
                                 if self.first_crawler and not self.is_pinned_weibo(w):
                                     # 置顶微博的具体时间不好判定，将非置顶微博当成最新微博，写入上次抓取id的csv
                                     self.latest_weibo_id = str(wb['id'])
-                                    csvutil.update_last_weibo_id(wb['user_id'], str(wb['id']) + ' ' + wb['created_at'], self.user_csv_file_path)
+                                    csvutil.update_last_weibo_id(wb['user_id'], str(wb['id']) + ' ' + wb['created_at'],
+                                                                 self.user_csv_file_path)
                                     self.first_crawler = False
                                 if str(wb['id']) == self.last_weibo_id:
                                     if const.CHECK_COOKIE['CHECK'] and (not const.CHECK_COOKIE['CHECKED']):
@@ -971,12 +976,13 @@ class Weibo(object):
                                     if self.last_weibo_id == self.latest_weibo_id:
                                         logger.info('{} 用户没有发新微博'.format(self.user['screen_name']))
                                     else:
-                                        logger.info('增量获取微博完毕，将最新微博id从 {} 变更为 {}'.format(self.last_weibo_id, self.latest_weibo_id))
+                                        logger.info('增量获取微博完毕，将最新微博id从 {} 变更为 {}'.format(self.last_weibo_id,
+                                                                                         self.latest_weibo_id))
                                     return True
                                 # 上一次标记的微博被删了，就把上一条微博时间记录推前两天，多抓点评论或者微博内容修改
                                 # TODO 更加合理的流程是，即使读取到上次更新微博id，也抓取增量评论，由此获得更多的评论
                                 since_date = datetime.strptime(
-                                convert_to_days_ago(self.last_weibo_date, 2), '%Y-%m-%d')
+                                    convert_to_days_ago(self.last_weibo_date, 2), '%Y-%m-%d')
                             if created_at < since_date:
                                 if self.is_pinned_weibo(w):
                                     continue
@@ -1340,7 +1346,7 @@ class Weibo(object):
                 self.get_weibo_comments(weibo, max_count,
                                         self.sqlite_insert_comments)
                 count += 1
-                #为防止被ban抓取一定数量的评论后随机睡3到6秒
+                # 为防止被ban抓取一定数量的评论后随机睡3到6秒
                 if count % 20:
                     sleep(random.randint(3, 6))
 
@@ -1454,6 +1460,26 @@ class Weibo(object):
                 """.format(table=table, keys=keys, values=values)
         cur.execute(sql, list(data.values()))
         con.commit()
+
+    # 查询
+    def sqlite_select(self, con: sqlite3.Connection, where: str):
+        cur = con.cursor()
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        if where:
+            cur.execute('select * from user where {}'.format(where))
+        else:
+            cur.execute('select * from user')
+        return cur.fetchall()
+
+    # def sqlite_update_by_key(self,con: sqlite3.Connection, data:dict,table:str,key:str):
+    #     if not data:
+    #         return
+    #     if key not in data:
+    #         raise Exception('can not find key {} in the table'.format(key))
+    #     keys = ",".join(data.keys())
+    #     values = ",".join(['?'] * len(data))
+    #     sql = """"UPDATE {table} set"""
 
     def get_sqlite_connection(self):
         path = self.get_sqlte_path()
@@ -1599,7 +1625,7 @@ class Weibo(object):
         """获取全部微博"""
         try:
             # 用户id不可用
-            if(self.get_user_info() != 0):
+            if (self.get_user_info() != 0):
                 return
             logger.info('准备搜集 {} 的微博'.format(self.user['screen_name']))
             if const.MODE == 'append' and ('first_crawler' not in self.__dict__ or self.first_crawler is False):
@@ -1618,9 +1644,19 @@ class Weibo(object):
                 for page in tqdm(pages, desc='Progress'):
                     is_end = self.get_one_page(page)
                     weibos_has_keywords = self.filter_weibos(self.weibo, self.user_config["keywords"])
-                    if len(weibos_has_keywords)!=0:
-                        notify.push_pushPlus(weibos_has_keywords,self.push['token'])
-                        logger.info('----find{}'.format(weibos_has_keywords))
+                    if len(weibos_has_keywords) != 0:
+                        # 只推送最新的微博
+                        # 获取上次的
+                        # where = "id ={}".format(self.user_config['user_id'])
+                        # res = self.sqlite_select(self.get_sqlite_connection(), where)[0]
+                        # res = dict(res)
+                        # if res:
+                        #     last_push_id = res['last_push_id']
+                        #     for weibo in weibos_has_keywords:
+                        #         if
+                        resp = notify.push_pushPlus(weibos_has_keywords, self.push['token'])
+                        logger.info(resp)
+                        # logger.info('----find{}'.format(weibos_has_keywords))
                     if is_end:
                         break
 
@@ -1689,7 +1725,7 @@ class Weibo(object):
                 if user_config['user_id'] not in self.user_keywords:
                     logger.warning("用户{}未找到keywords，默认爬取push所有微博".format(user_config['user_id']))
                 else:
-                    user_config['keywords'] = self.user_keywords[user_config['user_id'] ]
+                    user_config['keywords'] = self.user_keywords[user_config['user_id']]
 
                 if len(user_config['query_list']):
                     for query in user_config['query_list']:
