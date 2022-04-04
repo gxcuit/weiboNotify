@@ -1644,16 +1644,7 @@ class Weibo(object):
                 for page in tqdm(pages, desc='Progress'):
                     is_end = self.get_one_page(page)
                     weibos_has_keywords = self.filter_weibos(self.weibo, self.user_config["keywords"])
-                    if len(weibos_has_keywords) != 0:
-                        # 只推送最新的微博
-                        # 获取上次的
-                        # where = "id ={}".format(self.user_config['user_id'])
-                        # res = self.sqlite_select(self.get_sqlite_connection(), where)[0]
-                        # res = dict(res)
-                        # if res:
-                        #     last_push_id = res['last_push_id']
-                        #     for weibo in weibos_has_keywords:
-                        #         if
+                    if len(weibos_has_keywords) != 0 and page==1:
                         resp = notify.push_pushPlus(weibos_has_keywords, self.push['token'])
                         logger.info(resp)
                         # logger.info('----find{}'.format(weibos_has_keywords))
