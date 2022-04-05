@@ -1,0 +1,31 @@
+{
+    "user_id_list": ["1216826604"],
+    "filter": 0,
+    "remove_html_tag": 1,
+    "since_date": 1,
+    "start_page": 1,
+    "write_mode": ["sqlite"],
+    "original_pic_download": 0,
+    "retweet_pic_download": 0,
+    "original_video_download": 0,
+    "retweet_video_download": 0,
+    "download_comment":0,
+    "comment_max_download_count":100,
+    "result_dir_name": 0,
+    "cookie": "{your cookie}",
+    "mysql_config": {
+        "host": "localhost",
+        "port": 3306,
+        "user": "root",
+        "password": "123456",
+        "charset": "utf8mb4"
+    },
+    "user_keywords": {
+
+        "1216826604": ["仓","买","干","T","大家","%"]
+    },
+    "push": {
+        "method": "push_plus",
+        "token": "{your token}"
+    }
+}
