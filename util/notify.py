@@ -4,7 +4,7 @@ from typing import List
 
 import requests
 import const
-# from weibo import logger
+from weibo import push_logger
 
 
 
@@ -38,5 +38,9 @@ def push_pushPlus(weibos:List,token):
 
     response = requests.post(url="http://www.pushplus.plus/send/", json=push)
     response.encoding='utf-8'
+    if response.status_code!=200:
+        push_logger.warning('send {} failed:{}'.format(push,response.text))
+    else:
+        push_logger.info('push{} success:{}'.format(push_weibos,response.text))
     return response.text
 

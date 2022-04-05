@@ -40,6 +40,7 @@ logging_path = os.path.split(
     os.path.realpath(__file__))[0] + os.sep + 'logging.conf'
 logging.config.fileConfig(logging_path)
 logger = logging.getLogger('weibo')
+push_logger = logging.getLogger('push')
 
 
 class Weibo(object):
@@ -187,6 +188,8 @@ class Weibo(object):
                          params=params,
                          headers=self.headers,
                          verify=False)
+        if r.status_code!=200:
+            sys.exit()
         return r.json(), r.status_code
 
     def get_weibo_json(self, page):
@@ -927,10 +930,10 @@ class Weibo(object):
             # if any([k in weibo['text'] or k in weibo['retweet']['text'] if 'retweet' in weibo else False for k in keywords]):
             if any([k in weibo['text'] for k in keywords]):
                 filtered.append(weibo)
-                break
+                continue
             if 'retweet' in weibo and any([k in weibo['retweet']['text'] for k in keywords]):
                 filtered.append(weibo)
-                break
+                continue
             # if weibo['retweet'] and any([k in weibo['retweet'][]  for k in keywords]):
 
         return filtered
@@ -1649,7 +1652,8 @@ class Weibo(object):
                     weibos_has_keywords = self.filter_weibos(self.weibo, self.user_config["keywords"])
                     if len(weibos_has_keywords) != 0 and page==1:
                         resp = notify.push_pushPlus(weibos_has_keywords, self.push['token'])
-                        logger.info(resp)
+
+                        # logger.info(resp)
                         # logger.info('----find{}'.format(weibos_has_keywords))
                     if is_end:
                         break
