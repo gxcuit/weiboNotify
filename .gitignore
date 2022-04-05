@@ -1,0 +1,5 @@
+log/
+weibo/
+__pycache__/
+.idea/
+test/
