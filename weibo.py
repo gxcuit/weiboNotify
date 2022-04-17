@@ -183,13 +183,16 @@ class Weibo(object):
 
     def get_json(self, params):
         """获取网页中json数据"""
-        url = 'https://m.weibo.cn/api/container/getIndex?'
-        r = requests.get(url,
-                         params=params,
-                         headers=self.headers,
-                         verify=False)
-        if r.status_code!=200:
-            sys.exit()
+        try:
+            url = 'https://m.weibo.cn/api/container/getIndex?'
+            r = requests.get(url,
+                             params=params,
+                             headers=self.headers,
+                             verify=False)
+            if r.status_code!=200:
+                sys.exit()
+        except Exception as e:
+            logger.error(e)
         return r.json(), r.status_code
 
     def get_weibo_json(self, page):
